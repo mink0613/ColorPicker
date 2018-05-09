@@ -1,0 +1,59 @@
+﻿<Window x:Class="ColorPicker.ColorPickerView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ColorPicker"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="240" Width="245" >
+    <Window.InputBindings>
+        <KeyBinding Command="{Binding CaptureClick}" Key="{Binding CaptureClick.GestureKey}"/>
+        <KeyBinding Command="{Binding ResetClick}" Key="{Binding ReleaseClick.GestureKey}" />
+    </Window.InputBindings>
+    <Window.Resources>
+        <local:ColorPickerViewModel x:Key="ColorPickerViewModel" />
+    </Window.Resources>
+    <Window.DataContext>
+        <Binding Source="{StaticResource ColorPickerViewModel}" />
+    </Window.DataContext>
+    <Grid >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70" />
+            <RowDefinition Height="70" />
+            <RowDefinition Height="70" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="0.5*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="1" Grid.ColumnSpan="2" Background="Beige" CornerRadius="20" />
+
+        <Button Grid.Row="0" Content="Capture" Command="{Binding CaptureClick}" />
+
+        <Button Grid.Row="1" Content="Release" Command="{Binding ReleaseClick}" />
+
+        <Label Grid.Row="0" Grid.Column="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Pixel" />
+        <Label Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="RGB" />
+        <Label Grid.Row="2" Grid.Column="1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Hex&#xD;&#xA;Code" />
+
+        <Image Grid.Row="0" Grid.Column="2" Width="20" Height="20" Source="{Binding PixelPreview, UpdateSourceTrigger=PropertyChanged}" />
+        <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch">
+            <Label Width="50" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="{Binding RGBValue}" />
+            <Button Content="Copy" Height="25" Command="{Binding RGBCopyClick}"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Stretch">
+            <Label Width="50" Grid.Row="1" Grid.Column="2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="{Binding HexCodeValue}" />
+            <Button Content="Copy" Height="25" Command="{Binding HexCodeCopyClick}" />
+        </StackPanel>
+
+        <Border Grid.Row="2" Grid.Column="0" />
+        <Image Grid.Row="2" Grid.Column="0" Source="{Binding ScreenPreview, UpdateSourceTrigger=PropertyChanged}" >
+            <Image.InputBindings>
+                <MouseBinding MouseAction="LeftClick" Command="{Binding SelectPixcelClick}"
+                                      CommandParameter="{Binding .}"/>
+            </Image.InputBindings>
+        </Image>
+    </Grid>
+</Window>
