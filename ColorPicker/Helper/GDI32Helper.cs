@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace ColorPicker
+namespace ColorPicker.Helper
 {
     public class GDI32Helper
     {

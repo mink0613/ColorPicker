@@ -5,3 +5,9 @@
 /.vs
 /obj
 /bin
+/Debug
+/Release
+obj/
+bin/
+Debug/
+Release/

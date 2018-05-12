@@ -1,4 +1,5 @@
 ﻿using AutomatedPackagingSystem.Common;
+using ColorPicker.Helper;
 using System;
 using System.Drawing;
 using System.IO;
@@ -7,7 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace ColorPicker
+namespace ColorPicker.MainApplication
 {
     public class ColorPickerViewModel : BaseViewModel
     {
@@ -148,10 +149,10 @@ namespace ColorPicker
             _captureGraphics = Graphics.FromImage(_screen);
 
             _captureClick = new RelayCommand((param) => OnCaptureClick(param), true);
-            ((RelayCommand)_captureClick).GestureKey = Key.F6;
+            ((RelayCommand)_captureClick).GestureKey = Key.F2;
 
-            _releaseClick = new RelayCommand((param) => OnResetClick(param), true);
-            ((RelayCommand)_releaseClick).GestureKey = Key.F7;
+            _releaseClick = new RelayCommand((param) => OnReleaseClick(param), true);
+            ((RelayCommand)_releaseClick).GestureKey = Key.F3;
 
             _selectPixcelClick = new RelayCommand((param) => OnSelectPixelClick(param), true);
 
@@ -169,10 +170,11 @@ namespace ColorPicker
             }
         }
 
-        private void OnResetClick(object param)
+        private void OnReleaseClick(object param)
         {
             if(_isCaptured == true)
             {
+                StopCapturePixel();
                 _mainThread.Start();
                 _isCaptured = false;
             }
@@ -193,9 +195,7 @@ namespace ColorPicker
 
                 RGBValue = string.Format("R: {0}\nG: {1}\nB: {2}", pixelByteArray[2], pixelByteArray[1], pixelByteArray[0]);
 
-                System.Drawing.Color myColor = System.Drawing.Color.FromArgb(pixelByteArray[1], pixelByteArray[2], pixelByteArray[3]);
-
-                HexCodeValue = string.Format("{0:X2}{1:X2}{2:X2}", pixelByteArray[2], pixelByteArray[1], pixelByteArray[0]);// myColor.R.ToString("X2") + myColor.G.ToString("X2") + myColor.B.ToString("X2");
+                HexCodeValue = string.Format("{0:X2}{1:X2}{2:X2}", pixelByteArray[2], pixelByteArray[1], pixelByteArray[0]);
             }
         }
 
@@ -204,7 +204,7 @@ namespace ColorPicker
             if(RGBValue != null && RGBValue != "")
             {
                 Clipboard.SetText(RGBValue);
-                MessageBox.Show("Copied!");
+                MessageBox.Show("Copied to clipboard!");
             }
         }
 
@@ -213,70 +213,11 @@ namespace ColorPicker
             if(HexCodeValue != null && HexCodeValue != "")
             {
                 Clipboard.SetText(HexCodeValue);
-                MessageBox.Show("Copied!");
+                MessageBox.Show("Copied to clipboard!");
             }
-        }
-
-        private Image CaptureWindow(IntPtr handle, int pointX = 0, int pointY = 0, int targetWidth = 0, int targetHeight = 0)
-        {
-            // get te hDC of the target window
-            IntPtr hdcSrc = User32Helper.GetWindowDC(handle);
-            
-            // get the size
-            User32Helper.RECT windowRect = new User32Helper.RECT();
-            User32Helper.GetWindowRect(handle, ref windowRect);
-
-            int width, height;
-            if (targetWidth == 0 || targetHeight == 0)
-            {
-                width = windowRect.right - windowRect.left;
-                height = windowRect.bottom - windowRect.top;
-            }
-            else
-            {
-                width = targetWidth;
-                height = targetHeight;
-            }
-
-            // create a device context we can copy to
-            IntPtr hdcDest = GDI32Helper.CreateCompatibleDC(hdcSrc);
-            
-            // create a bitmap we can copy it to,
-            // using GetDeviceCaps to get the width/height
-            IntPtr hBitmap = GDI32Helper.CreateCompatibleBitmap(hdcSrc, width, height);
-            
-            // select the bitmap object
-            IntPtr hOld = GDI32Helper.SelectObject(hdcDest, hBitmap);
-            
-            // bitblt over
-            GDI32Helper.BitBlt(hdcDest, 0, 0, width, height, hdcSrc, pointX, pointY, GDI32Helper.SRCCOPY);
-            
-            // restore selection
-            GDI32Helper.SelectObject(hdcDest, hOld);
-            
-            // clean up 
-            GDI32Helper.DeleteDC(hdcDest);
-            User32Helper.ReleaseDC(handle, hdcSrc);
-            
-            // get a .NET image object for it
-            Image img = Image.FromHbitmap(hBitmap);
-            // free up the Bitmap object
-            GDI32Helper.DeleteObject(hBitmap);
-            return img;
         }
 
         private ImageSource ConvertBitmapToImageSource(Bitmap image)
-        {
-            using (Stream str = new MemoryStream())
-            {
-                image.Save(str, System.Drawing.Imaging.ImageFormat.Bmp);
-                str.Seek(0, SeekOrigin.Begin);
-                BitmapDecoder bdc = new BmpBitmapDecoder(str, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                return bdc.Frames[0];
-            }
-        }
-
-        private ImageSource ConvertImageToImageSource(Image image)
         {
             using (Stream str = new MemoryStream())
             {
@@ -293,11 +234,10 @@ namespace ColorPicker
             Console.WriteLine("X: " + point.X + "\t Y: " + point.Y);
             point.X -= _captureWidth / 2;
             point.Y -= _captureHeight / 2;
+            
+            var image = ScreenCaptureHelper.CaptureWindow(User32Helper.GetDesktopWindow(), point.X, point.Y, _captureWidth, _captureHeight);
 
-            //_captureGraphics.CopyFromScreen(point.X, point.Y, 0, 0, _currentSize, CopyPixelOperation.SourceCopy);
-            var image = CaptureWindow(User32Helper.GetDesktopWindow(), point.X, point.Y, _captureWidth, _captureHeight);
-
-            return ConvertImageToImageSource(image);
+            return ScreenCaptureHelper.ConvertImageToImageSource(image);
         }
 
         private ImageSource CapturePixel()
@@ -306,11 +246,10 @@ namespace ColorPicker
             Console.WriteLine("X: " + point.X + "\t Y: " + point.Y);
             point.X -= _pixelWidth / 2;
             point.Y -= _pixelHeight / 2;
+            
+            var image = ScreenCaptureHelper.CaptureWindow(User32Helper.GetDesktopWindow(), point.X, point.Y, _pixelWidth, _pixelHeight);
 
-            //_captureGraphics.CopyFromScreen(point.X, point.Y, 0, 0, _currentSize, CopyPixelOperation.SourceCopy);
-            var image = CaptureWindow(User32Helper.GetDesktopWindow(), point.X, point.Y, _pixelWidth, _pixelHeight);
-
-            return ConvertImageToImageSource(image);
+            return ScreenCaptureHelper.ConvertImageToImageSource(image);
         }
 
         private void RunCaptureScreen()
@@ -323,13 +262,24 @@ namespace ColorPicker
 
         private void RunCapturePixel()
         {
+            StopCapturePixel();
+
             _pixelThread = new Timer();
             _pixelThread.Interval = 50;
             _pixelThread.Tick += PixelThreadTick;
             _pixelThread.Start();
         }
 
-        private void MainThreadTick(object sender, System.EventArgs e)
+        private void StopCapturePixel()
+        {
+            if (_pixelThread != null)
+            {
+                _pixelThread.Stop();
+                _pixelThread = null;
+            }
+        }
+
+        private void MainThreadTick(object sender, EventArgs e)
         {
             _mainThread.Stop();
 
