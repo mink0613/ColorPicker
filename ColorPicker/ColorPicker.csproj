@@ -58,6 +58,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Common\RelayCommand.cs" />
+    <Compile Include="Helper\ScreenCaptureHelper.cs" />
     <Compile Include="Helper\User32Helper.cs" />
     <Page Include="MainApplication\ColorPickerView.xaml">
       <Generator>MSBuild:Compile</Generator>

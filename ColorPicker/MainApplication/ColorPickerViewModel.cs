@@ -36,13 +36,13 @@ namespace ColorPicker.MainApplication
 
         private ICommand _captureClick;
 
-        private ICommand _releaseClick;
-
         private ICommand _selectPixcelClick;
 
         private ICommand _RGBCopyClick;
 
         private ICommand _hexCodeCopyClick;
+
+        private string _buttonContent;
 
         private string _RGBValue;
 
@@ -84,14 +84,6 @@ namespace ColorPicker.MainApplication
             }
         }
 
-        public ICommand ReleaseClick
-        {
-            get
-            {
-                return _releaseClick;
-            }
-        }
-
         public ICommand RGBCopyClick
         {
             get
@@ -113,6 +105,19 @@ namespace ColorPicker.MainApplication
             get
             {
                 return _selectPixcelClick;
+            }
+        }
+
+        public string ButtonContent
+        {
+            get
+            {
+                return _buttonContent;
+            }
+            set
+            {
+                _buttonContent = value;
+                OnPropertyChanged();
             }
         }
 
@@ -151,31 +156,28 @@ namespace ColorPicker.MainApplication
             _captureClick = new RelayCommand((param) => OnCaptureClick(param), true);
             ((RelayCommand)_captureClick).GestureKey = Key.F2;
 
-            _releaseClick = new RelayCommand((param) => OnReleaseClick(param), true);
-            ((RelayCommand)_releaseClick).GestureKey = Key.F3;
-
             _selectPixcelClick = new RelayCommand((param) => OnSelectPixelClick(param), true);
 
             _RGBCopyClick = new RelayCommand((param) => OnRGBCopyClick(param), true);
             _hexCodeCopyClick = new RelayCommand((param) => OnHexCodeCopyClick(param), true);
+
+            ButtonContent = "Capture (F2)";
         }
 
         private void OnCaptureClick(object param)
         {
-            if(_isCaptured == false)
+            if (_isCaptured == false)
             {
                 _mainThread.Stop();
                 _isCaptured = true;
+                ButtonContent = "Release (F2)";
                 RunCapturePixel();
             }
-        }
-
-        private void OnReleaseClick(object param)
-        {
-            if(_isCaptured == true)
+            else
             {
                 StopCapturePixel();
                 _mainThread.Start();
+                ButtonContent = "Capture (F2)";
                 _isCaptured = false;
             }
         }
@@ -185,6 +187,7 @@ namespace ColorPicker.MainApplication
             if(_isCaptured == true)
             {
                 _pixelThread.Stop();
+
                 BitmapSource bitmapImage = (BitmapSource)PixelPreview;
 
                 int height = bitmapImage.PixelHeight;
@@ -196,6 +199,8 @@ namespace ColorPicker.MainApplication
                 RGBValue = string.Format("R: {0}\nG: {1}\nB: {2}", pixelByteArray[2], pixelByteArray[1], pixelByteArray[0]);
 
                 HexCodeValue = string.Format("{0:X2}{1:X2}{2:X2}", pixelByteArray[2], pixelByteArray[1], pixelByteArray[0]);
+
+                _pixelThread.Start();
             }
         }
 
