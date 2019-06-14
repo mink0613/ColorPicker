@@ -42,9 +42,13 @@ namespace ColorPicker.MainApplication
 
         private ICommand _hexCodeCopyClick;
 
+        private ICommand _CMYKCopyClick;
+
         private string _buttonContent;
 
         private string _RGBValue;
+
+        private string _CMYKValue;
 
         private string _hexCodeValue;
 
@@ -100,6 +104,14 @@ namespace ColorPicker.MainApplication
             }
         }
 
+        public ICommand CMYKCopyClick
+        {
+            get
+            {
+                return _CMYKCopyClick;
+            }
+        }
+
         public ICommand SelectPixcelClick
         {
             get
@@ -134,6 +146,19 @@ namespace ColorPicker.MainApplication
             }
         }
 
+        public string CMYKValue
+        {
+            get
+            {
+                return _CMYKValue;
+            }
+            set
+            {
+                _CMYKValue = value;
+                OnPropertyChanged();
+            }
+        }
+
         public string HexCodeValue
         {
             get
@@ -160,13 +185,14 @@ namespace ColorPicker.MainApplication
 
             _RGBCopyClick = new RelayCommand((param) => OnRGBCopyClick(param), true);
             _hexCodeCopyClick = new RelayCommand((param) => OnHexCodeCopyClick(param), true);
+            _CMYKCopyClick = new RelayCommand((param) => OnCMYKCopyClick(param), true);
 
             ButtonContent = "Capture (F2)";
         }
 
         private void OnCaptureClick(object param)
         {
-            if (_isCaptured == false)
+            if(_isCaptured == false)
             {
                 _mainThread.Stop();
                 _isCaptured = true;
@@ -187,7 +213,6 @@ namespace ColorPicker.MainApplication
             if(_isCaptured == true)
             {
                 _pixelThread.Stop();
-
                 BitmapSource bitmapImage = (BitmapSource)PixelPreview;
 
                 int height = bitmapImage.PixelHeight;
@@ -198,10 +223,38 @@ namespace ColorPicker.MainApplication
 
                 RGBValue = string.Format("R: {0}\nG: {1}\nB: {2}", pixelByteArray[2], pixelByteArray[1], pixelByteArray[0]);
 
-                HexCodeValue = string.Format("{0:X2}{1:X2}{2:X2}", pixelByteArray[2], pixelByteArray[1], pixelByteArray[0]);
+                HexCodeValue = string.Format("#{0:X2}{1:X2}{2:X2}", pixelByteArray[2], pixelByteArray[1], pixelByteArray[0]);
+
+                double r = Double.Parse(string.Format("{0}", pixelByteArray[2]));
+                double g = Double.Parse(string.Format("{0}", pixelByteArray[1]));
+                double b = Double.Parse(string.Format("{0}", pixelByteArray[0]));
+
+                CMYKValue = ConvertRGBToCMYK(r, g, b);
 
                 _pixelThread.Start();
             }
+        }
+
+        private string ConvertRGBToCMYK(double r, double g, double b)
+        {
+            r = r / 255.0; // scale 0 ~ 255 to 0 ~ 1
+            g = g / 255.0; // scale 0 ~ 255 to 0 ~ 1
+            b = b / 255.0; // scale 0 ~ 255 to 0 ~ 1
+
+            double tempMax = Math.Max(r, g);
+            tempMax = Math.Max(tempMax, b);
+
+            double k = 1 - tempMax;
+            double c = (1 - r - k) / (1 - k);
+            double m = (1 - g - k) / (1 - k);
+            double y = (1 - b - k) / (1 - k);
+
+            k = Math.Min(Math.Round((k) * 100), 100);
+            c = Math.Min(Math.Round(c * 100), 100);
+            m = Math.Min(Math.Round(m * 100), 100);
+            y = Math.Min(Math.Round(y * 100), 100);
+
+            return string.Format("C: {0}%\nM: {1}%\nY: {2}%\nK: {3}%", c, m, y, k);
         }
 
         private void OnRGBCopyClick(object param)
@@ -218,6 +271,15 @@ namespace ColorPicker.MainApplication
             if(HexCodeValue != null && HexCodeValue != "")
             {
                 Clipboard.SetText(HexCodeValue);
+                MessageBox.Show("Copied to clipboard!");
+            }
+        }
+
+        private void OnCMYKCopyClick(object param)
+        {
+            if (CMYKValue != null && CMYKValue != "")
+            {
+                Clipboard.SetText(CMYKValue);
                 MessageBox.Show("Copied to clipboard!");
             }
         }
