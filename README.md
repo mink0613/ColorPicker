@@ -8,4 +8,4 @@ Now you can pick a color from your screen.
 # Supporting values of color
 * RGB
 * Hex code
-* CYMK
+* CMYK
